@@ -14,6 +14,10 @@ I am using a Logitech MX518 circa 2008. The most important thing about this mous
 
 ### The Scroll Wheel Encoder
 
+### The ESP32
+I used an ESP32-wroom dev board for testing. Then I moved to an ESP32-C3 for its small form factor. 
+
+The ESP32-wroom dev boards had problems when using the VIN pin to power the mouse. I suspect it is due to the thin trace connecting USB to VIN, according to [this forum post]([url](https://esp32.com/viewtopic.php?t=11904)).
 ## Schematics
 ### Controller
 The controller uses a [CYC63743-PC]([url](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/793/CY7C63722,23,43.pdf)) of which the datasheety can be found at Digikey.
