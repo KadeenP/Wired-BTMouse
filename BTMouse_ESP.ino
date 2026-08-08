@@ -18,10 +18,20 @@ Middle pin of dual photoT connected to VCC
 // https://github.com/T-vK/ESP32-BLE-Mouse/pull/64 // Fix for ESP32 V3.0.0 Board update
 
 #include <PS2Mouse.h>
-#include <BleMouse.h>
+#include <HijelHID_BLEMouse.h>
 
+#define BOOT_BUTTON_PIN 9
 
-BleMouse bleMouse;
+// ---------------------------------------------------------------------------
+// Mouse object
+// ---------------------------------------------------------------------------
+
+// Create the mouse with a custom name and manufacturer string.
+// All other settings stay at their defaults:
+//   - 5 buttons
+//   - No horizontal scroll
+//   - 125 Hz report rate
+HijelBLEMouse bleMouse("MX510 BLE", "Logitech-Kaden");
 
 #define MOUSE_DATA 5 // arduino pin 5 // white 
 #define MOUSE_CLOCK 18 // arduino pin 6 // green
@@ -62,6 +72,10 @@ void setup()
   Serial.begin(38400); //38400
   // Possibly use 115200 for BT
   
+    // Configure the boot button pin as an input.
+    // INPUT_PULLUP means the pin reads HIGH normally and LOW when pressed.
+    pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+
   Serial.println("I HAVE BEGUN");
   mouse.initialize();
   
@@ -87,7 +101,7 @@ void setup()
 
   Serial.println("Starting BLE work!");
   bleMouse.begin();
-
+  Serial.println("Advertising — waiting for host to connect...");
 }
 
 /**
@@ -95,7 +109,11 @@ void setup()
  */
 void loop()
 {
-  
+  if (!bleMouse.isPaired()) {
+        delay(500);
+        return;
+  }
+
   if(bleMouse.isConnected()) {
   
   
@@ -118,21 +136,22 @@ void loop()
     // unsigned long startTime;
 
     bleMouse.move(data[1]*5,data[2]*-5);
+    // Handle clicks
     if (data[0] == 10){ // right
-      bleMouse.press(MOUSE_RIGHT);
+      bleMouse.setButton(MouseButton::Right, true);
       delay(5);
     }
     if (data[0] == 9){//bleMouse.isPressed(MOUSE_LEFT)){ // left
-      bleMouse.press(MOUSE_LEFT);
+      bleMouse.setButton(MouseButton::Left, true);
       delay(2);
     }
     if(data[0]==8){ // refresh 
-      bleMouse.release(MOUSE_LEFT);
-      bleMouse.release(MOUSE_RIGHT);
+      bleMouse.setButton(MouseButton::Left, false);
+      bleMouse.setButton(MouseButton::Right, false);
     }
 
     if (data[0] == 12){ // middle
-      bleMouse.click(MOUSE_MIDDLE);
+      bleMouse.click(MouseButton::Middle);
       delay(2);
     }
 
@@ -146,9 +165,9 @@ void loop()
     int8_t scroll_out = (int8_t)scroll_accum;
     scroll_accum -= scroll_out;
 
-    if (scroll_out != 0) {
-      bleMouse.move(0, 0, scroll_out);
-    }
+    // if (scroll_out != 0) {
+    //   bleMouse.move(0, 0, scroll_out);
+    // }
 
     delay(2);//delay(5);// delay(100);
     
